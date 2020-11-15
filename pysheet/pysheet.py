@@ -11,25 +11,35 @@ Ncols = 5
 cellre = re.compile(r'\b[A-Z][0-9]\b')
 
 
-def cellname(col, row):
+def cellname(row, col):
     # returns a string translates col 0, row 0 to 'A1'
-    pass
+    return f"{chr(ord('A') + col)}{row + 1}"
 
 
 class Cell():
     def __init__(self, row, col, siblings, parent):
         # save off instance variables from arguments
+        self.row = row
+        self.col = col
+        self.siblings = siblings
+        print(siblings)
+        print(parent)
         # and also
         #set name to cellname(i, j)
+        self.name = cellname(row, col)
         # set value of cell to zero
+        self.value = 0
         # set formula to a str(value)
+        self.formula = '0'
         # Set of Dependencies - must be updated if this cell changes
         # make deps empty
+        self.deps = set()
         # Set of Requirements - values required for this cell to calculate
         # make reqs empty
-
+        self.reqs = set()
         # be happy you get this machinery for free.
         self.var = tk.StringVar()
+        print('cell-var', self.var)
         entry = self.widget = tk.Entry(parent,
                                        textvariable=self.var,
                                        justify='right')
@@ -43,6 +53,7 @@ class Cell():
 
         # set this cell's var to cell's value
         # and you're done.
+        self.var.set(self.value)
 
     def move(self, rowadvance, coladvance):
         targetrow = (self.row + rowadvance) % Nrows
@@ -50,6 +61,11 @@ class Cell():
 
         def focus(event):
             targetwidget = self.siblings[cellname(targetrow, targetcol)].widget
+            # print('siblings:')
+            # # print(self.siblings[cellname(targetrow, targetcol)].items())
+            # print(self.siblings[cellname(targetrow, targetcol)])
+            # print('siblings ', self.siblings[cellname(targetrow, targetcol)].name)
+            # print(type(self.siblings[cellname(targetrow, targetcol)]))
             targetwidget.focus()
 
         return focus
@@ -57,41 +73,65 @@ class Cell():
     def calculate(self):
         # find all the cells mentioned in the formula.
         #  put them all into a tmp set currentreqs
-        #  
+        currentreqs = set(cellre.findall(self.formula))
         # Add this cell to the new requirement's dependents
         # removing all the reqs that we might no longer need
-        # for each in currentreqs - self.reqs
-        #    my siblings[].deps.add(self.name)
+        print('currentreqs - self.reqs')
+        print(currentreqs - self.reqs)
+        for each in currentreqs - self.reqs:
+            self.siblings[each].deps.add(self.name)
+            print('siblings - name')
+            print(self.siblings[each].name)
+            print('siblings - value')
+            print(self.siblings[each].value)
+            print('siblings - formula')
+            print(self.siblings[each].formula)
+            print('siblings - siblings')
+            print(self.siblings[each].siblings)
+
         # Add remove this cell from dependents no longer referenced
         # for each in self.reqs - currentreqs:
-        #    my siblings[r].deps.remove(self.name)
+        #     self.siblings[each].deps.remove(self.name)
         #  
         # Look up the values of our required cells
         # reqvalues = a comprehension of r, self.siblings[r].value for r in currentreqs
+        reqvalues = {r: self.siblings[r].value for r in currentreqs}
         # Build an environment with these values and basic math functions
         
         environment = ChainMap(math.__dict__, reqvalues)
+        print('cell-calculate-environment ', environment)
         # Note that eval is DANGEROUS and should not be used in production
         self.value = eval(self.formula, {}, environment)
+        print('cell-calculate-value ', self.value)
 
         # save currentreqs in self.reqs
+        self.reqs = currentreqs
         # set this cell's var to cell's value
-        # 
+        self.var.set(self.value)
 
     def propagate(self):
-        pass 
         # for each of your deps
-        #     calculate
-        #     propogate
+        for d in self.deps:
+            # calculate
+            self.siblings[d].calculate()
+            # propogate
+            self.siblings[d].propagate()
+
+
 
     def edit(self, event):
         # make sure to update the cell with the formula
+        self.var.set(self.formula)
         self.widget.select_range(0, tk.END)
+
 
     def update(self, event):
         # get the value of this cell and put it in formula
+        self.formula = self.var.get()
         # calculate all dependencies
+        self.calculate()
         # propogate to all dependecnies
+        self.propagate()
 
         # If this was after pressing Return, keep showing the formula
         if hasattr(event, 'keysym') and event.keysym == "Return":
