@@ -20,7 +20,7 @@ class Cell():
     def __init__(self, row, col, siblings, parent):
         # save off instance variables from arguments
         # and also
-        #set name to cellname(i, j)
+        # set name to cellname(i, j)
         # set value of cell to zero
         # set formula to a str(value)
         # Set of Dependencies - must be updated if this cell changes
@@ -41,12 +41,12 @@ class Cell():
         entry.bind('<Left>', self.move(0, -1))
         entry.bind('<Right>', self.move(0, 1))
 
-        # set this cell's var to cell's value
+        # set this cell's var to cell's value - What cells variable? self.var? what cells value?
         # and you're done.
 
     def move(self, rowadvance, coladvance):
-        targetrow = (self.row + rowadvance) % Nrows
-        targetcol = (self.col + coladvance) % Ncols
+        # targetrow = (self.row + rowadvance) % Nrows
+        # targetcol = (self.col + coladvance) % Ncols
 
         def focus(event):
             targetwidget = self.siblings[cellname(targetrow, targetcol)].widget
@@ -55,53 +55,65 @@ class Cell():
         return focus
 
     def calculate(self):
-        # find all the cells mentioned in the formula.
+        # find all the cells mentioned in the formula. - what formula?
         #  put them all into a tmp set currentreqs
+        currentreqs = set(cellre.findall(self.formula))
         #  
-        # Add this cell to the new requirement's dependents
+        # Add this cell to the new requirement's dependents - new requirements?
+        for r in currentreqs - self.reqs:
         # removing all the reqs that we might no longer need
         # for each in currentreqs - self.reqs
         #    my siblings[].deps.add(self.name)
+            self.siblings[r].deps.add(self.name)
         # Add remove this cell from dependents no longer referenced
+        for r in self.reqs - currentreqs:
+
         # for each in self.reqs - currentreqs:
-        #    my siblings[r].deps.remove(self.name)
+            self.siblings[r].deps.remove(self.name)
         #  
         # Look up the values of our required cells
-        # reqvalues = a comprehension of r, self.siblings[r].value for r in currentreqs
+        reqvalues = {r: self.siblings[r].value for r in currentreqs}
         # Build an environment with these values and basic math functions
-        
         environment = ChainMap(math.__dict__, reqvalues)
-        # Note that eval is DANGEROUS and should not be used in production
+        # Note that eval is DANGEROUS and should not be used in production - say what?
         self.value = eval(self.formula, {}, environment)
 
         # save currentreqs in self.reqs
+        self.reqs = currentreqs
         # set this cell's var to cell's value
-        # 
+        self.var.set(self.value)
 
     def propagate(self):
-        pass 
+        for d in self.deps:
         # for each of your deps
         #     calculate
+            self.siblings[d].calculate()
         #     propogate
+            self.siblings[d].propagate()
 
     def edit(self, event):
         # make sure to update the cell with the formula
+        self.var.set(self.formula)
         self.widget.select_range(0, tk.END)
 
     def update(self, event):
         # get the value of this cell and put it in formula
+        self.formula = self.var.get()
         # calculate all dependencies
+        self.calculate()
         # propogate to all dependecnies
+        self.propogate()
 
         # If this was after pressing Return, keep showing the formula
         if hasattr(event, 'keysym') and event.keysym == "Return":
             self.var.set(self.formula)
 
-    def save(self, filename):
-        pass
-
-    def load(self, filename):
-        pass
+#   these were added
+    # def save(self, filename):
+    #     pass
+    #
+    # def load(self, filename):
+    #     pass
 
 class SpreadSheet(tk.Frame):
     def __init__(self, rows=5, cols=5, master=None):
@@ -131,10 +143,11 @@ class SpreadSheet(tk.Frame):
             rowlabel.grid(row=1+i, column=0)
             for j in range(self.cols):
                 cell = Cell(i, j, self.cells, self.cellframe)
-                self.cells[cell.name] = cell
+                # self.cells[cell.name] = cell
                 cell.widget.grid(row=1+i, column=1+j)
 
 
 root = tk.Tk()
 app = SpreadSheet(Nrows, Ncols, master=root)
 app.mainloop()
+#exporimento
