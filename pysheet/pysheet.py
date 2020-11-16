@@ -13,20 +13,29 @@ cellre = re.compile(r'\b[A-Z][0-9]\b')
 
 def cellname(col, row):
     # returns a string translates col 0, row 0 to 'A1'
-    pass
+    return f"{chr(ord('A') + col)}{row + 1}"
 
 
 class Cell():
     def __init__(self, row, col, siblings, parent):
         # save off instance variables from arguments
+        self.row = row
+        self.col = col
+        self.siblings = siblings
+        self.parent = parent
         # and also
         # set name to cellname(i, j)
+        self.name = cellname(row, col)
         # set value of cell to zero
+        self.value = 0
         # set formula to a str(value)
+        self.formula = '0'
         # Set of Dependencies - must be updated if this cell changes
         # make deps empty
+        self.deps = set()
         # Set of Requirements - values required for this cell to calculate
         # make reqs empty
+        self.reqs = set()
 
         # be happy you get this machinery for free.
         self.var = tk.StringVar()
@@ -43,10 +52,11 @@ class Cell():
 
         # set this cell's var to cell's value - What cells variable? self.var? what cells value?
         # and you're done.
+        self.var.set(self.value)
 
     def move(self, rowadvance, coladvance):
-        # targetrow = (self.row + rowadvance) % Nrows
-        # targetcol = (self.col + coladvance) % Ncols
+        targetrow = (self.row + rowadvance) % Nrows
+        targetcol = (self.col + coladvance) % Ncols
 
         def focus(event):
             targetwidget = self.siblings[cellname(targetrow, targetcol)].widget
@@ -102,7 +112,7 @@ class Cell():
         # calculate all dependencies
         self.calculate()
         # propogate to all dependecnies
-        self.propogate()
+        self.propagate()
 
         # If this was after pressing Return, keep showing the formula
         if hasattr(event, 'keysym') and event.keysym == "Return":
@@ -143,7 +153,7 @@ class SpreadSheet(tk.Frame):
             rowlabel.grid(row=1+i, column=0)
             for j in range(self.cols):
                 cell = Cell(i, j, self.cells, self.cellframe)
-                # self.cells[cell.name] = cell
+                self.cells[cell.name] = cell
                 cell.widget.grid(row=1+i, column=1+j)
 
 
