@@ -11,9 +11,9 @@ Ncols = 5
 cellre = re.compile(r'\b[A-Z][0-9]\b')
 
 
-def cellname(col, row):
+def cellname(i, j):
     # returns a string translates col 0, row 0 to 'A1'
-    return f"{chr(ord('A') + col)}{row + 1}"
+    return f"{chr(ord('A') + j)}{i + 1}"
 
 
 class Cell():
@@ -22,7 +22,6 @@ class Cell():
         self.row = row
         self.col = col
         self.siblings = siblings
-        self.parent = parent
         # and also
         # set name to cellname(i, j)
         self.name = cellname(row, col)
@@ -67,6 +66,8 @@ class Cell():
     def calculate(self):
         # find all the cells mentioned in the formula. - what formula?
         #  put them all into a tmp set currentreqs
+        # print('this is the self.formula')
+        # print(self.formula)
         currentreqs = set(cellre.findall(self.formula))
         #  
         # Add this cell to the new requirement's dependents - new requirements?
@@ -126,7 +127,7 @@ class Cell():
     #     pass
 
 class SpreadSheet(tk.Frame):
-    def __init__(self, rows=5, cols=5, master=None):
+    def __init__(self, rows, cols, master=None):
         super().__init__(master)
         self.rows = rows
         self.cols = cols
