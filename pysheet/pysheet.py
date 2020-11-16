@@ -22,7 +22,7 @@ class Cell():
         self.row = row
         self.col = col
         self.siblings = siblings
-        self.parent = parent
+        # self.parent = parent
         # and also
         # set name to cellname(i, j)
         self.name = cellname(row, col)
@@ -67,7 +67,10 @@ class Cell():
     def calculate(self):
         # find all the cells mentioned in the formula. - what formula?
         #  put them all into a tmp set currentreqs
+        print('formula', self.formula)
         currentreqs = set(cellre.findall(self.formula))
+        print('currentreqs', currentreqs)
+        print('self.reqs', self.reqs)
         #  
         # Add this cell to the new requirement's dependents - new requirements?
         for r in currentreqs - self.reqs:
@@ -80,6 +83,9 @@ class Cell():
 
         # for each in self.reqs - currentreqs:
             self.siblings[r].deps.remove(self.name)
+
+        print('currentreqs', currentreqs)
+        print('self.reqs', self.reqs)
         #  
         # Look up the values of our required cells
         reqvalues = {r: self.siblings[r].value for r in currentreqs}
